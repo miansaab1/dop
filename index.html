@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blogger Backup Tool</title>
+</head>
+<body>
+  <h2>Blogger Backup Tool</h2>
+  <p>Enter the URL of your Blogger website:</p>
+  <input type="text" id="blogUrl" placeholder="Enter URL like https://example.blogspot.com">
+  <button onclick="fetchAndDownload()">Fetch and Download Backup</button>
+  
+  <script>
+    async function fetchAndDownload() {
+      const blogUrlInput = document.getElementById('blogUrl').value.trim();
+      if (!blogUrlInput) {
+        alert('Please enter a valid Blogger URL.');
+        return;
+      }
+
+      // Normalize the entered URL by removing trailing slashes
+      const blogUrl = blogUrlInput.replace(/\/+$/, '');
+
+      // List of restricted Blogger URLs (without trailing slashes)
+      const restrictedUrls = [
+        'https://xenplus.blogspot.com',
+        'https://thesquadhub.blogspot.com'
+        // Add more restricted URLs as needed
+      ];
+
+      // Check if the entered URL matches any restricted URL
+      if (restrictedUrls.includes(blogUrl)) {
+        alert('Backing up this Blogger website is not allowed.');
+        return;
+      }
+
+      try {
+        // Construct URL to fetch Atom XML using a CORS proxy
+        const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+        const atomUrl = `${proxyUrl}${blogUrl}/feeds/posts/default?alt=atom`;
+
+        // Fetch Atom XML content
+        const response = await fetch(atomUrl);
+        if (!response.ok) {
+          throw new Error('Failed to fetch Atom XML. Please check the URL and try again.');
+        }
+        const xmlText = await response.text();
+
+        // Create a blob from XML text
+        const blob = new Blob([xmlText], { type: 'application/xml' });
+
+        // Create a temporary link and trigger download
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = 'backup.xml';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+      } catch (error) {
+        alert(error.message);
+      }
+    }
+  </script>
+</body>
+</html>
